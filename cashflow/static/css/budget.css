@@ -1,0 +1,40 @@
+body {
+    background: radial-gradient(circle at top, #1e293b 0%, #0f172a 55%, #020617 100%);
+    font-family: 'Segoe UI', sans-serif;
+    color: #e5e7eb;
+  }
+  
+  .budget-card {
+    background-color: rgba(15, 23, 42, 0.95);
+    border: 1px solid #334155;
+  }
+  
+  .budget-input {
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background-color: #1f2937;
+    color: #e5e7eb;
+  }
+  
+  .budget-btn {
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 12px;
+    font-weight: 500;
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  
+  .budget-btn:hover {
+    background-color: #2563eb;
+  }
+  
+  .summary-box {
+    background-color: rgba(30, 41, 59, 0.9);
+    border: 1px solid #334155;
+  }
+  

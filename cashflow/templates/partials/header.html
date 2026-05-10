@@ -1,0 +1,41 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'home' %}">CashFlow</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+      data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown"
+      aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink"
+             role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Інструменти
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="{% url 'createBudget'%}">Створити бюджет</a></li>
+            <li><a class="dropdown-item" href="{% url 'createPlan'%}">Додавання витрат</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'chart'%}">Звіт</a>
+        </li>
+
+        <!-- Кнопка-аватар -->
+        <li class="nav-item ms-3">
+          <a href="{% url 'profile' %}" class="d-inline-block">
+            <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'images/avatar.png' %}{% endif %}" 
+                 id="header-avatar" 
+                 alt="Аватар" 
+                 class="rounded-circle" 
+                 style="width: 40px; height: 40px; object-fit: cover;">
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

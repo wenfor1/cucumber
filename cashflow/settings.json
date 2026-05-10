@@ -1,0 +1,12 @@
+{
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    },
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": true,
+        "strings": true
+    },
+    "editor.snippetSuggestions": "top",
+    "emmet.showAbbreviationSuggestions": true
+}

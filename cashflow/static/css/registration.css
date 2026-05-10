@@ -1,0 +1,99 @@
+.logo {
+    width: 200px;
+    margin-top: 20px;
+    margin-left: 180px;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-container {
+    flex: 1;
+    max-width: 500px;
+    padding-left: 180px;
+}
+
+.image-container {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 100px;
+}
+
+.pig {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .image-container {
+        margin-top: 20px;
+        padding-left: 0; /* Відміняємо відступ для мобільних */
+    }
+}
+
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d9d9d9;
+    border-radius: 5px;
+    font-weight: 500;
+    color: #757575;
+    padding: 10px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.google-btn:hover {
+    background-color: #1f2937;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.google-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+body {
+    color: #e5e7eb;
+}
+
+.form-container form {
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 1.5rem;
+}
+
+.form-label,
+h2 {
+    color: #e5e7eb;
+}
+
+.form-control,
+.form-check-input {
+    background-color: #1f2937;
+    border-color: #334155;
+    color: #e5e7eb;
+}
+
+.form-control::placeholder {
+    color: #9ca3af;
+}
+
+.form-check-label {
+    color: #cbd5e1;
+}

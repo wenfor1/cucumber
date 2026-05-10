@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Головна сторінка</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <style>
+        .profile-img {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 1px solid #ccc;
+        }
+        .card-img {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          border-radius: 1rem;
+        }
+        .highlight {
+            border: 2px solid red; /* Підсвічування червоним */
+        }
+        .form-control:disabled {
+            background-color: #1b2536;
+            color: #9ca3af;
+        }
+        .success-message {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100px; /* Відповідно до розміру аватарки */
+            height: 100px; /* Відповідно до розміру аватарки */
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .avatar-container:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        .avatar-overlay i {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .avatar-overlay span {
+            font-size: 12px;
+        }
+
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="profile-bg">
+
+    {% include 'partials/header.html' %}
+
+    <div class="container py-5">
+        <div class="row">
+            <!-- Left column (User info) -->
+            <div class="col-md-6">
+             <div class="d-flex align-items-center mb-4">
+    <label for="avatar-input" class="position-relative avatar-container" style="cursor: pointer;">
+        <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}https://cdn-icons-png.flaticon.com/512/149/149071.png{% endif %}" class="profile-img me-3" alt="Avatar" id="user-avatar">
+        <div class="avatar-overlay">
+            <i class="bi bi-camera-fill"></i>
+            <span>Змінити</span>
+        </div>
+        <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+    </label>
+    <div>
+        <h6 class="mb-1">{{ user.username }}</h6>
+        <p class="mb-0 text-muted">{{ user.email }}</p>
+    </div>
+    <button class="btn btn-primary ms-auto" id="edit-btn">Змінити</button>
+</div>
+
+                <form id="profile-form">
+                    {% csrf_token %}
+                    <!-- Full Name input -->
+                    <div class="mb-3">
+                        <label class="form-label">Повне ім'я</label>
+                        <input type="text" class="form-control" placeholder="Ім'я" id="full-name" name="full_name" value="{{ user.first_name }}{% if user.first_name and user.last_name %} {% endif %}{{ user.last_name }}" disabled>
+                    </div>
+                
+                    <!-- Gender selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Стать</label>
+                        <select class="form-control" id="gender" name="gender" disabled>
+                            <option value="not_selected" {% if user.profile.gender == "not_selected" %}selected{% endif %}>Не вибрано</option>
+                            <option value="male" {% if user.profile.gender == "male" %}selected{% endif %}>Чоловік</option>
+                            <option value="female" {% if user.profile.gender == "female" %}selected{% endif %}>Жінка</option>
+                        </select>
+                    </div>
+                
+                    <!-- Language selection (default Ukrainian) -->
+                    <div class="mb-3">
+                        <label class="form-label">Мова</label>
+                        <select class="form-control" id="language" name="language" aria-label="Language" disabled>
+                            <option value="uk" {% if user.profile.language == "uk" %}selected{% endif %}>Українська</option>
+                            <option value="en" {% if user.profile.language == "en" %}selected{% endif %}>English</option>
+                        </select>
+                    </div>
+                
+                    <!-- Save button -->
+                    <button class="btn btn-success" id="save-btn" style="display: none;">Зберегти</button>
+                </form>
+
+                <div class="mt-4">
+                    <h6 class="fw-bold">Співправця та пропозиції:</h6>
+                    <p class="mb-0 text-muted">{{ user.email }}</p>
+                
+                    <a href="{% url 'logout' %}" class="btn btn-outline-danger mt-4">Вийти</a>
+                </div>
+                
+
+                <!-- Success message will be inserted here -->
+                <div id="success-message" class="success-message" style="display: none;">Дані успішно збережено!</div>
+            </div>
+
+            <!-- Right column (Cards carousel) -->
+            <div class="col-md-6 text-center">
+                <form id="cardStorageForm" style="display:none;">
+                    {% csrf_token %}
+                </form>
+                <h5 class="mb-4">Мої картки</h5>
+                <div id="cardCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+                    <div class="carousel-inner" id="carouselItems">
+                        <div class="carousel-item active">
+                            <div class="credit-card-display">
+                                <div class="credit-card-front">
+                                    <div class="chip"></div>
+                                    <div class="card-number-display">4111 1111 1111 1111</div>
+                                    <div class="card-details">
+                                        <div class="card-holder-name">Test Cards</div>
+                                        <div class="expiry-date">12/26</div>
+                                    </div>
+                                    <div class="card-type-logo">VISA</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="carousel-control-prev" type="button" data-bs-target="#cardCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#cardCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                </div>
+                
+                <!-- Кнопка додавання картки -->
+                <button class="btn btn-primary w-75" id="add-card-btn">Додати картку</button>
+            </div>
+            
+            <!-- Модальне вікно для додавання картки -->
+            <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Додати нову картку</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Симуляція картки (попередній перегляд) -->
+                            <div class="card-container">
+                                <div class="credit-card preview-card">
+                                    <div class="credit-card-front">
+                                        <div class="chip"></div>
+                                        <div class="card-number-display" id="previewCardNumber">•••• •••• •••• ••••</div>
+                                        <div class="card-details">
+                                            <div class="card-holder-name" id="previewCardHolder">ІМ'Я ВЛАСНИКА</div>
+                                            <div class="expiry-date" id="previewCardExpiry">MM/РР</div>
+                                        </div>
+                                        <div class="card-type-logo" id="previewCardType">BANK</div>
+                                    </div>
+                                    <div class="credit-card-back">
+                                        <div class="magnetic-strip"></div>
+                                        <div class="signature-panel">
+                                            <div class="cvv-code" id="previewCardCvv">•••</div>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Форма для введення картки -->
+                            <form id="cardForm">
+                                <div class="mb-3">
+                                    <label for="cardNumber" class="form-label">Номер картки</label>
+                                    <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                                    <div class="invalid-feedback">Введіть дійсний номер картки</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cardHolder" class="form-label">Ім'я власника</label>
+                                    <input type="text" class="form-control" id="cardHolder" placeholder="Test Cards">
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label for="cardExpiry" class="form-label">Термін дії</label>
+                                            <input type="text" class="form-control" id="cardExpiry" placeholder="MM/РР" maxlength="5">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label for="cardCvv" class="form-label">CVV код</label>
+                                            <input type="text" class="form-control" id="cardCvv" placeholder="123" maxlength="3">
+                                            <div class="invalid-feedback">Введіть CVV код</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                            <button type="button" class="btn btn-primary" id="processPayment">Зберегти картку</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <style>
+            /* Стилі для карток */
+            .credit-card-display {
+                width: 300px;
+                height: 180px;
+                margin: 0 auto;
+                perspective: 1000px;
+                border-radius: 15px;
+            }
+            
+            .credit-card {
+                width: 300px;
+                height: 180px;
+                margin: 0 auto;
+                perspective: 1000px;
+                position: relative;
+                transition: transform 0.6s;
+                transform-style: preserve-3d;
+            }
+            
+            .preview-card:hover {
+                transform: rotateY(180deg);
+            }
+            
+            .credit-card-front, .credit-card-back {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                backface-visibility: hidden;
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+            
+            .credit-card-front {
+                background: linear-gradient(135deg, #000000, #434343);
+                color: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+            
+            .visa-card .credit-card-front {
+                background: linear-gradient(135deg, #1a1f71, #2b5fab);
+            }
+            
+            .mastercard-card .credit-card-front {
+                background: linear-gradient(135deg, #ff5f00, #f79e1b);
+            }
+            
+            .amex-card .credit-card-front {
+                background: linear-gradient(135deg, #2e77bc, #108168);
+            }
+            
+            .credit-card-back {
+                background: linear-gradient(135deg, #333333, #5a5a5a);
+                color: white;
+                transform: rotateY(180deg);
+            }
+            
+            .chip {
+                width: 40px;
+                height: 30px;
+                background: linear-gradient(135deg, #cdb055, #e6cb82);
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+            
+            .card-number-display {
+                font-size: 18px;
+                letter-spacing: 2px;
+                margin-bottom: 15px;
+                font-family: monospace;
+            }
+            
+            .card-details {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                margin-top: 15px;
+            }
+            
+            .card-type-logo {
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                font-size: 16px;
+                font-weight: bold;
+                font-style: italic;
+            }
+            
+            .magnetic-strip {
+                width: 100%;
+                height: 40px;
+                background-color: #333;
+                margin: 20px 0;
+            }
+            
+            .signature-panel {
+                background-color: #fff;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 10px;
+                color: #000;
+            }
+            
+            .cvv-code {
+                font-family: monospace;
+                font-size: 14px;
+            }
+            
+            .card-info {
+                font-size: 10px;
+                text-align: center;
+                margin-top: 20px;
+            }
+            
+            /* Стилі для каруселі карток */
+            .carousel-item {
+                padding: 20px 0;
+            }
+            .carousel-control-prev, .carousel-control-next {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            width: 10%;
+            }
+
+            .carousel-control-prev-icon, .carousel-control-next-icon {
+                background-color: rgba(0,0,0,0.5);
+                border-radius: 50%;
+                padding: 10px;
+            }
+
+            #cardCarousel:hover .carousel-control-prev,
+            #cardCarousel:hover .carousel-control-next {
+                opacity: 1;
+            }
+
+            /* Покращений вигляд карток */
+            .credit-card-display {
+                cursor: pointer;
+                transition: transform 0.3s ease;
+            }
+
+            .credit-card-display:hover {
+                transform: scale(1.05);
+            }
+            
+            /* Анімація для каруселі */
+            @keyframes cardSpin {
+                from { transform: rotateY(0deg); }
+                to { transform: rotateY(360deg); }
+            }
+            
+            .carousel-inner .carousel-item.active .credit-card-display {
+                animation: cardFloat 3s infinite alternate;
+            }
+            
+            @keyframes cardFloat {
+                0% { transform: translateY(0) rotate3d(0, 1, 0, 10deg); }
+                100% { transform: translateY(-10px) rotate3d(0, 1, 0, -10deg); }
+            }
+            </style>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const addCardBtn = document.getElementById('add-card-btn');
+                    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+                    const cardNumberInput = document.getElementById('cardNumber');
+                    const cardHolderInput = document.getElementById('cardHolder');
+                    const cardExpiryInput = document.getElementById('cardExpiry');
+                    const cardCvvInput = document.getElementById('cardCvv');
+                    const carouselElement = document.getElementById('cardCarousel');
+                    
+                    // Активуємо карусель з автоматичним обертанням
+                    const carousel = new bootstrap.Carousel(carouselElement, {
+                        interval: 5000,
+                        ride: 'carousel',
+                        wrap: true
+                    });
+                
+                    // Приховуємо стрілки за замовчуванням
+                    const prevButton = document.querySelector('.carousel-control-prev');
+                    const nextButton = document.querySelector('.carousel-control-next');
+                    
+                    if (prevButton && nextButton) {
+                        prevButton.style.opacity = '0';
+                        nextButton.style.opacity = '0';
+                        prevButton.style.transition = 'opacity 0.3s';
+                        nextButton.style.transition = 'opacity 0.3s';
+                    }
+                
+                    // Показуємо/ховаємо стрілки при наведенні миші
+                    carouselElement.addEventListener('mouseenter', function() {
+                        const carouselItems = document.querySelectorAll('.carousel-item');
+                        // Показуємо стрілки тільки якщо карток більше однієї
+                        if (carouselItems.length > 1) {
+                            prevButton.style.opacity = '1';
+                            nextButton.style.opacity = '1';
+                        }
+                    });
+                
+                    carouselElement.addEventListener('mouseleave', function() {
+                        prevButton.style.opacity = '0';
+                        nextButton.style.opacity = '0';
+                    });
+                
+                    // Завантажуємо картки користувача
+                    loadUserCards();
+                    
+                    // Функція для завантаження карток користувача з бази даних
+                    function loadUserCards() {
+                        fetch('{% url "get_cards" %}')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    const carouselInner = document.getElementById('carouselItems');
+                                    
+                                    
+                                    carouselInner.innerHTML = '';
+                                    
+                                    // Додаємо картки з бази даних
+                                    if (data.cards.length > 0) {
+                                        data.cards.forEach((card, index) => {
+                                            let cardClass = '';
+                                            if (card.card_type === 'VISA') cardClass = 'visa-card';
+                                            else if (card.card_type === 'MASTERCARD') cardClass = 'mastercard-card';
+                                            else if (card.card_type === 'AMEX') cardClass = 'amex-card';
+                                            
+                                            const newItem = document.createElement('div');
+                                            newItem.className = 'carousel-item';
+                                            if (index === 0) {
+                                                // Робимо першу картку активною
+                                                newItem.classList.add('active');
+                                            }
+                                            
+                                            newItem.innerHTML = `
+                                                <div class="credit-card-display ${cardClass}">
+                                                    <div class="credit-card-front">
+                                                        <div class="chip"></div>
+                                                        <div class="card-number-display">${card.card_number}</div>
+                                                        <div class="card-details">
+                                                            <div class="card-holder-name">${card.card_holder}</div>
+                                                            <div class="expiry-date">${card.expiry_date}</div>
+                                                        </div>
+                                                        <div class="card-type-logo">${card.card_type}</div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                            
+                                            carouselInner.appendChild(newItem);
+                                        });
+                                    } else {
+                                        // Якщо немає збережених карток, додаємо тестову картку
+                                        const defaultItem = document.createElement('div');
+                                        defaultItem.className = 'carousel-item active';
+                                        defaultItem.innerHTML = `
+                                            <div class="credit-card-display">
+                                                <div class="credit-card-front">
+                                                    <div class="chip"></div>
+                                                    <div class="card-number-display">4111 1111 1111 1111</div>
+                                                    <div class="card-details">
+                                                        <div class="card-holder-name">TestCards</div>
+                                                        <div class="expiry-date">12/26</div>
+                                                    </div>
+                                                    <div class="card-type-logo">VISA</div>
+                                                </div>
+                                            </div>
+                                        `;
+                                        carouselInner.appendChild(defaultItem);
+                                    }
+                                    
+                                    // Оновлюємо стан стрілок в залежності від кількості карток
+                                    updateArrowVisibility();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Помилка завантаження карток:', error);
+                            });
+                    }
+                    
+                    // Функція для оновлення видимості стрілок в залежності від кількості карток
+                    function updateArrowVisibility() {
+                        const carouselItems = document.querySelectorAll('.carousel-item');
+                        
+                        if (carouselItems.length <= 1) {
+                            // Ховаємо стрілки, якщо тільки одна картка
+                            prevButton.style.display = 'none';
+                            nextButton.style.display = 'none';
+                        } else {
+                            // Показуємо стрілки, але з нульовою прозорістю (видимі при наведенні)
+                            prevButton.style.display = 'block';
+                            nextButton.style.display = 'block';
+                        }
+                    }
+                
+                    // Відкриваємо модальне вікно для додавання картки
+                    addCardBtn.addEventListener('click', function() {
+                        modal.show();
+                    });
+                
+                    // Форматування введення номера картки з пробілами
+                    cardNumberInput.addEventListener('input', function(e) {
+                        let value = e.target.value.replace(/\D/g, '');
+                        let formattedValue = '';
+                        
+                        for (let i = 0; i < value.length; i++) {
+                            if (i > 0 && i % 4 === 0) {
+                                formattedValue += ' ';
+                            }
+                            formattedValue += value[i];
+                        }
+                        
+                        e.target.value = formattedValue;
+                        updateCardPreview();
+                    });
+                
+                    // Форматування введення терміну дії картки
+                    cardExpiryInput.addEventListener('input', function(e) {
+                        let value = e.target.value.replace(/\D/g, '');
+                        
+                        if (value.length > 2) {
+                            e.target.value = value.substring(0, 2) + '/' + value.substring(2);
+                        } else {
+                            e.target.value = value;
+                        }
+                        updateCardPreview();
+                    });
+                
+                    // Обмеження введення CVV до 3 цифр
+                    cardCvvInput.addEventListener('input', function(e) {
+                        let value = e.target.value.replace(/\D/g, '');
+                        e.target.value = value.substring(0, 3);
+                        updateCardPreview();
+                    });
+                
+                    // Оновлення імені власника
+                    cardHolderInput.addEventListener('input', function() {
+                        updateCardPreview();
+                    });
+                
+                    // Функція оновлення попереднього перегляду картки
+                    function updateCardPreview() {
+                        const previewCardNumber = document.getElementById('previewCardNumber');
+                        const previewCardHolder = document.getElementById('previewCardHolder');
+                        const previewCardExpiry = document.getElementById('previewCardExpiry');
+                        const previewCardCvv = document.getElementById('previewCardCvv');
+                        const previewCardType = document.getElementById('previewCardType');
+                        
+                        // Ідентифікація типу картки по першим цифрам
+                        const cardNumber = cardNumberInput.value.replace(/\s/g, '');
+                        let cardType = 'BANK';
+                        
+                        if (cardNumber.startsWith('4')) {
+                            cardType = 'VISA';
+                            document.querySelector('.preview-card').classList.add('visa-card');
+                            document.querySelector('.preview-card').classList.remove('mastercard-card', 'amex-card');
+                        } else if (/^5[1-5]/.test(cardNumber)) {
+                            cardType = 'MASTERCARD';
+                            document.querySelector('.preview-card').classList.add('mastercard-card');
+                            document.querySelector('.preview-card').classList.remove('visa-card', 'amex-card');
+                        } else if (/^3[47]/.test(cardNumber)) {
+                            cardType = 'AMEX';
+                            document.querySelector('.preview-card').classList.add('amex-card');
+                            document.querySelector('.preview-card').classList.remove('visa-card', 'mastercard-card');
+                        }
+                        
+                        previewCardNumber.textContent = cardNumberInput.value || '•••• •••• •••• ••••';
+                        previewCardHolder.textContent = cardHolderInput.value || 'ІМ\'Я ВЛАСНИКА';
+                        previewCardExpiry.textContent = cardExpiryInput.value || 'MM/РР';
+                        previewCardCvv.textContent = cardCvvInput.value || '•••';
+                        previewCardType.textContent = cardType;
+                    }
+                
+                    // Обробка натискання кнопки "Зберегти картку"
+                    document.getElementById('processPayment').addEventListener('click', function() {
+                        const cardNumber = cardNumberInput.value;
+                        const cardHolder = cardHolderInput.value;
+                        const cardExpiry = cardExpiryInput.value;
+                        const cardCvv = cardCvvInput.value;
+                        
+                        // Валідація полів
+                        if (!cardNumber || !cardHolder || !cardExpiry || !cardCvv) {
+                            alert('Будь ласка, заповніть усі поля');
+                            return;
+                        }
+                        
+                        // Визначення типу картки
+                        let cardType = 'BANK';
+                        
+                        if (cardNumber.startsWith('4')) {
+                            cardType = 'VISA';
+                        } else if (/^5[1-5]/.test(cardNumber.replace(/\s/g, ''))) {
+                            cardType = 'MASTERCARD';
+                        } else if (/^3[47]/.test(cardNumber.replace(/\s/g, ''))) {
+                            cardType = 'AMEX';
+                        }
+                        
+                        // Отримуємо CSRF токен
+                        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        
+                        // Відправляємо дані на сервер
+                        fetch('{% url "save_card" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrftoken
+                            },
+                            body: JSON.stringify({
+                                cardNumber: cardNumber,
+                                cardHolder: cardHolder,
+                                cardExpiry: cardExpiry,
+                                cardCvv: cardCvv,
+                                cardType: cardType
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                // Очищуємо форму
+                                cardNumberInput.value = '';
+                                cardHolderInput.value = '';
+                                cardExpiryInput.value = '';
+                                cardCvvInput.value = '';
+                                updateCardPreview();
+                                
+                                // Оновлюємо картки користувача
+                                loadUserCards();
+                                
+                                // Закриття модального вікна
+                                modal.hide();
+                            } else {
+                                alert('Помилка збереження картки: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Помилка:', error);
+                            alert('Помилка під час збереження картки!');
+                        });
+                    });
+        });
+                </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+// Кнопка редагування
+document.getElementById('edit-btn').addEventListener('click', function() {
+    // Увімкнення полів для редагування
+    document.getElementById('full-name').disabled = false;
+    document.getElementById('gender').disabled = false;
+    document.getElementById('language').disabled = false;
+
+    // Підсвічування полів
+    document.getElementById('full-name').classList.add('highlight');
+    document.getElementById('gender').classList.add('highlight');
+    document.getElementById('language').classList.add('highlight');
+
+    // Показати кнопку "Зберегти"
+    document.getElementById('save-btn').style.display = 'inline-block';
+});
+
+// Збереження даних на сервері
+document.getElementById('save-btn').addEventListener('click', function(event) {
+    event.preventDefault(); // Запобігаємо стандартному відправленню форми
+
+    // Отримуємо CSRF токен
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Збираємо дані форми
+    const formData = new FormData();
+    formData.append('full_name', document.getElementById('full-name').value);
+    formData.append('gender', document.getElementById('gender').value);
+    formData.append('language', document.getElementById('language').value);
+
+    // Відправляємо запит на сервер
+    fetch('{% url "update_profile" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Вимикаємо поля після успішного збереження
+            document.getElementById('full-name').disabled = true;
+            document.getElementById('gender').disabled = true;
+            document.getElementById('language').disabled = true;
+
+            // Прибираємо підсвічування полів
+            document.getElementById('full-name').classList.remove('highlight');
+            document.getElementById('gender').classList.remove('highlight');
+            document.getElementById('language').classList.remove('highlight');
+
+            // Показуємо повідомлення про успішне збереження
+            document.getElementById('success-message').style.display = 'block';
+            document.getElementById('success-message').textContent = data.message;
+
+            // Приховуємо повідомлення через 3 секунди
+            setTimeout(function() {
+                document.getElementById('success-message').style.display = 'none';
+            }, 3000);
+        }
+    })
+    .catch(error => {
+        console.error('Помилка:', error);
+        document.getElementById('success-message').style.display = 'block';
+        document.getElementById('success-message').style.color = 'red';
+        document.getElementById('success-message').textContent = 'Помилка під час збереження даних!';
+    });
+});
+function uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    // Отримуємо CSRF токен
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch('{% url "upload_avatar" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Оновлюємо аватарку в хедері
+            const headerAvatar = document.getElementById('header-avatar');
+            if (headerAvatar) {
+                headerAvatar.src = document.getElementById('user-avatar').src; // Виправлено тут
+            }
+            
+            // Показуємо повідомлення про успішне завантаження
+            document.getElementById('success-message').style.display = 'block';
+            document.getElementById('success-message').style.color = 'green';
+            document.getElementById('success-message').textContent = 'Аватарка успішно оновлена!';
+            
+            // Приховуємо повідомлення через 3 секунди
+            setTimeout(function() {
+                document.getElementById('success-message').style.display = 'none';
+            }, 3000);
+        } else {
+            throw new Error(data.message || 'Помилка завантаження аватарки');
+        }
+    })
+    .catch(error => {
+        console.error('Помилка:', error);
+        document.getElementById('success-message').style.display = 'block';
+        document.getElementById('success-message').style.color = 'red';
+        document.getElementById('success-message').textContent = `Помилка: ${error.message}`;
+    });
+}
+document.getElementById('avatar-input').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Створюємо попередній перегляд
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('user-avatar').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        
+        // Відправляємо файл на сервер
+        uploadAvatar(file);
+    }
+});
+
+</script>
+</body>
+</html>
